@@ -9,7 +9,7 @@ class Data(object):
         self.file_path = path
 
     def load_json_to_csv(self, file_prefix, num_play_list):
-        out_filename = "ml-1m.train.rating"
+        out_filename = "./Data/ml-1m.train.rating"
         out_handler = open(out_filename, "w")
         play_lists = []
         track_uris = []
@@ -22,12 +22,13 @@ class Data(object):
             print filename 
             data = json.load(file_handler)
             for play_list in data["playlists"]:
+                print play_list["tracks"][-1]["track_uri"]
                 play_lists.append(play_list)
                 for track in play_list["tracks"]:
                     track_uris.append(track["track_uri"])
 
         track_uris = set(track_uris)
-        for idx,track_uri in enumerate(track_uris):
+        for idx,track_uri in enumerate(list(track_uris)):
             track_uri2num[track_uri] = idx
         
         value = [track_uri2num[x] for x in track_uris]
@@ -36,24 +37,25 @@ class Data(object):
 
         leave_one = []
         train_track = []
-        for idx,playlist in enumerate(play_lists):
+        for idx,play_list in enumerate(data["playlists"]):
             for track in play_list["tracks"][:-1]:
                 train_track.append(track)
                 ret = "%d\t%d\t1\t%d\n" % \
                 (idx, track_uri2num[track["track_uri"]], 978824330)
                 out_handler.write(ret)
             leave_one.append((idx,track_uri2num[play_list["tracks"][-1]["track_uri"]]))
+        
+        
         out_handler.close()
-
-        out_filename = "ml-1m.test.rating"
+        out_filename = "./Data/ml-1m.test.rating"
         out_handler = open(out_filename, "w")
         for x in leave_one:
-            ret = "%d\t%d\t1\t%d\n" % \
+            ret = "%d\t%d\t5\t%d\n" % \
                    (x[0],x[1], 978824330)
             out_handler.write(ret)
         out_handler.close()
         
-        out_filename = "ml-1m.test.negative"
+        out_filename = "./Data/ml-1m.test.negative"
         out_handler = open(out_filename,"w")
        
         value = [track_uri2num[track["track_uri"]] for track in train_track]
@@ -66,7 +68,7 @@ class Data(object):
         reduced_track_uris = set(reduced_track_uris)
 
         num_to_select = 99
-        for idx,playlist in enumerate(play_lists):
+        for idx,play_list in enumerate(play_lists):
             temp_set = set([x["track_uri"] for x in play_list["tracks"]])
             temp_set = track_uris - temp_set
             list_of_random_items = random.sample(list(temp_set), num_to_select)
